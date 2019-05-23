@@ -1,9 +1,8 @@
-#!/usr/bin/env runhaskell
+{-# LANGUAGE CPP #-}
 
 import           Data.Char (isDigit)
 import           Data.List (intercalate)
 import           Data.Monoid ((<>))
-import           Data.Version (showVersion)
 
 import           Distribution.PackageDescription
 import           Distribution.Verbosity
@@ -12,6 +11,17 @@ import           Distribution.Simple.Setup (BuildFlags(..), ReplFlags(..), TestF
 import           Distribution.Simple.LocalBuildInfo
 import           Distribution.Simple.BuildPaths (autogenModulesDir)
 import           Distribution.Simple.Utils (createDirectoryIfMissingVerbose, rewriteFile, rawSystemStdout)
+
+#ifndef MIN_VERSION_Cabal
+#if __GLASGOW_HASKELL__ <= 710
+-- GHC 7.10 and earlier do not support the MIN_VERSION_Cabal macro.
+#define MIN_VERSION_Cabal(a,b,c) 0
+#endif
+#endif
+
+#if !MIN_VERSION_Cabal(2,0,0)
+import           Data.Version (showVersion)
+#endif
 
 
 --
@@ -55,7 +65,7 @@ main =
      preConf = \args flags -> do
        createDirectoryIfMissingVerbose silent True "gen"
        (preConf hooks) args flags
-   , sDistHook  = \pd mlbi uh flags -> do
+   , sDistHook = \pd mlbi uh flags -> do
        genBuildInfo silent pd
        (sDistHook hooks) pd mlbi uh flags
    , buildHook = \pd lbi uh flags -> do
@@ -72,7 +82,7 @@ main =
 genBuildInfo :: Verbosity -> PackageDescription -> IO ()
 genBuildInfo verbosity pkg = do
   createDirectoryIfMissingVerbose verbosity True "gen"
-  let (PackageName pname) = pkgName . package $ pkg
+  let pname = unPackageName . pkgName . package $ pkg
       version = pkgVersion . package $ pkg
       name = "BuildInfo_" ++ (map (\c -> if c == '-' then '_' else c) pname)
       targetHs = "gen/" ++ name ++ ".hs"
