@@ -7,14 +7,11 @@
 [build.validate]
   git = "refs/heads/master"
 
-[build.dist-7-10]
+[build.all-*]
+  git = "refs/heads/**"
+
+[build.dist-*]
   git = "refs/heads/master"
 
-[build.dist-8-0]
-  git = "refs/heads/master"
-
-[build.branches-7-10]
-  git = "refs/heads/topic/*"
-
-[build.branches-8-0]
+[build.branches-*]
   git = "refs/heads/topic/*"
